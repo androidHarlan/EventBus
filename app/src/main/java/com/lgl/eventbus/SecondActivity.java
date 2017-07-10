@@ -24,6 +24,6 @@ public class SecondActivity extends AppCompatActivity {
         });
     }
     public void sendForOne(View view){
-        EventBus.getDefault().post(new FirstEvent("指定发送","1"));
+        EventBus.getDefault().postSticky(new FirstEvent("指定发送","1"));
     }
 }

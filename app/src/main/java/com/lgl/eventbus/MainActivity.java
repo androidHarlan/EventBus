@@ -76,9 +76,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      * @param event 自己定义的类
      *              sticky = true  默认情况下，其为false。什么情况下使用sticky呢？
         当你希望你的事件不被马上处理的时候，举个栗子，比如说，在一个详情页点赞之后，产生一个VoteEvent，VoteEvent并不立即被消费，
-       而是等用户退出详情页回到商品列表之后，接收到该事件，然后刷新Adapter等。其实这就是之前我们用startActivityForResult和onActivityResult做的事情。
+       而是等用户退出详情页回到商品列表之后，接收到该事件，然后刷新Adapter等。priority通过priority指定订阅者优先级以实现控制事件交付顺序。
+    priority仅支持在相同ThreadMode下，高优先级订阅者会更早收到事件(被唤醒)。
+    EventBus默认所有订阅者的priority均为0。priority越大，级别越高
+    Called in Android UI's main thread
      */
- /*   @Subscribe(threadMode = ThreadMode.MAIN)
+    @Subscribe(threadMode = ThreadMode.MAIN,sticky = true,priority = 1000)
     public void receiveMsg(FirstEvent event){
         String tag=event.getTag();
         if(tag!=null&&!TextUtils.isEmpty(tag)){
@@ -89,12 +92,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Log.i("hemiy", "不是tag的消息");
             Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
         }
-    }*/
-    @Subscribe(threadMode = ThreadMode.MAIN,sticky = true,priority = 1000)
-    public void receive(FirstEvent event){
-        Log.i("hemiy", "收到了的消息");
     }
 
+
+    /**
+     * @param event/默认调用方式，在调用post方法的线程执行，避免了线程切换，性能开销最少
+     */
     @Subscribe(threadMode = ThreadMode.POSTING)
     public void receiveMsg1(FirstEvent event){
         String tag=event.getTag();
@@ -109,6 +112,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    /**
+     * @param event 如果调用post方法的线程不是主线程，则直接在该线程执行
+     如果是主线程，则切换到后台单例线程，多个方法公用同个后台线程，按顺序执行，避免耗时操作
+     */
     @Subscribe(threadMode = ThreadMode.BACKGROUND)
     public void receiveMsg2(FirstEvent event){
         String tag=event.getTag();
@@ -123,6 +130,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    /**
+     * @param event 开辟新独立线程，用来执行耗时操作，例如网络访问
+    //EventBus内部使用了线程池，但是要尽量避免大量长时间运行的异步线程，限制并发线程数量
+    //可以通过EventBusBuilder修改，默认使用Executors.newCachedThreadPool()
+     */
     @Subscribe(threadMode = ThreadMode.ASYNC)
     public void receiveMsg3(FirstEvent event){
         String tag=event.getTag();
